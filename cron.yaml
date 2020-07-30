@@ -1,0 +1,32 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: mongo-backup
+spec:
+  schedule: "30 07,12 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+          - name: google-cloud-key
+            secret:
+              secretName: backup-gcs
+          containers:
+          - name: mongo-backup
+            image: maneloyez/backupimg:oneandonlyV1.6
+            volumeMounts:
+            - name: google-cloud-key
+              mountPath: /var/secrets/google
+            env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/backup.json
+            - name:  MONGO_URI
+              value: "mongodb://service-mongodb:27017/dbname"
+            - name:  BUCKET_NAME
+              value: "mybucket"
+            - name: BACKUP_PATH
+              value: "/var"
+            - name: DATABASE_NAME
+              value: "dbname"
+          restartPolicy: OnFailure
